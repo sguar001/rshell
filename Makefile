@@ -6,7 +6,7 @@ OBJS = rshell.o
 
  rshell:
 		@mkdir -p bin
-		$(COMPILE) $(FLAGS) src/Command.cpp src/TokenTest.cpp src/RShell.cpp src/main.cpp -o bin/rshell
+		$(COMPILE) $(FLAGS) src/Command.cpp src/TokenTest.cpp src/main.cpp -o bin/rshell
 		
  clean:
 		rm -rf *~ *.o a.out	
