@@ -1,5 +1,5 @@
 name1 = Steve Guardado
 ucrnetid1 = sguar001
 name2 = Kenneth Farrell
-ucrnetid2 = kfarr02
+ucrnetid2 = kfarr002
 repourl = https://github.com/sguar001/rshell.git
