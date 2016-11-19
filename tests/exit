@@ -12,9 +12,9 @@ exit || (echo a && echo B)
 [ mainn.cpp ] && exit
 [ -d test/folder/ ] || exit
 [ -d test/folder/ ] && exit
-(echo A && ( [ main.cpp ] && echo CD )) || exit)
-(echo A && ( [ main.cpp ] && echo CD )) && exit)
-(echo A && ( [ main.cpp ] && echA CD )) || exit)
+echo A && ( [ main.cpp ] && echo CD )) || exit
+echo A && ( [ main.cpp ] && echo CD )) && exit
+echo A && ( [ main.cpp ] && echA CD )) || exit
 (echo A || [ main.cpp ]) && exit
 (echo A && [ main.cpp ]) || exit
 exit && (echo A && echo B)
