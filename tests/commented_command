@@ -1,0 +1,13 @@
+echo A #echo B
+echo A #&& echo B
+echo A && echo B #&& echo C
+echo A #; echo B
+echo A #|| echo B
+[ main.cpp ] #&& exit
+[ mainn.cpp ] #|| exit
+(ls -a && echo A) && echo A && echo AB #echo CD
+[ main.cpp ] && echo AB #echo XY
+(echo A && echo C); echo C #echo CD
+(echo A || echo C) #echo AB 
+ls -a #[ main.cpp ]
+exit

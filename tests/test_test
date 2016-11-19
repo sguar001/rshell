@@ -1,0 +1,20 @@
+[ main.cpp ]
+[ -d main.cpp ] 
+[ main.cpp ] && ls -al
+[ -e main.cpp ] && ls -al
+[ -d test/file/path ] 
+[ -d test/file/path ] && ls -a
+[ main.cpp ] && echo A
+[ main.cpp ] && echa B
+echo test || [ main.cpp ]
+echo AB && [ -f main.cpp ] 
+( ls -a && [ main.cpp ] ) && echo AB
+echo AB && ( ls -al && [ -e main.cpp ] )
+lsa && ( ls -a && [ main.cpp] )
+echa AB || (lsa && [ main.cpp ] )
+ech AB || [ main.cpp ]
+[ mainn.cpp ] && echo ABC
+[ mainn.cpp ] || ls -al
+(ls -al && [ main.cpp ] ) && echo ABCD
+(ls -al && [ -f main.cpp ]) || ls 
+exit

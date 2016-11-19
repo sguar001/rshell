@@ -1,0 +1,9 @@
+(echo A && echo B) || (echo C && echo D)
+( ls -a && ( echo A || echo B))
+ls -a && (ls -a && ls -l)
+ls -a && (blah && ls -l)
+blah && (ls -a && ls -l)
+blah && (ls -a || ls -l)
+ls -a || (ls -l && echo A)
+ls -a && (ls -a && ls -l) && (echo A || echo B)
+exit
