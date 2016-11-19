@@ -3,7 +3,8 @@
 #include <boost/tokenizer.hpp>
 #include <sys/types.h>
 #include <sys/wait.h>
-
+#include <sys/stat.h>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -12,7 +13,6 @@ using namespace boost;
 Command::Command()
 {
     commandString = "";
-    ///pass = false;
 }
 
 Command::Command(string c)
@@ -30,84 +30,207 @@ void Command::print()
     //cout << this->commandString;
 }
 
-void Command::execute()
+int Command::execute()
 {
     string command = this->getString();
+    string test;
+    
+    for(string::iterator beg = command.begin(); beg != command.end(); beg++)
+    {                          // searches for precendence as a child then 
+        if( (*beg) == '(' )   
+        {
+            for(string::iterator ending = beg + 1; ending != command.end(); ending++)
+            {
+                if((*ending) == ')')
+                {
+                    while(*beg != *ending)
+                    {
+                        test += *beg;
+                        beg++;
+                    }
+                    test += *ending;
+                    TokenTest* A = new TokenTest();  // parses without semicolon
+                    test = A->PrecedenceParse(test); // and executes
+                    bool result = A->ParseA(test); 
+                    this->success = result; //SET PROPER RETURN VALUE
+                    return 0;
+                }
+            }
+            
+        }
+        
+    }
+    
+    if(command == "exit" || command == " exit" || command == "exit ") //exits prompt
+    {
+        exit(0);
+    }
     
     typedef tokenizer<char_separator<char> > tokenizer;
     char_separator<char> sep(" ",";||&&", drop_empty_tokens);
     tokenizer tok(command, sep);
     vector<char*> vec;
-    
+    vector<string> testVec;
     for(tokenizer::iterator itr = tok.begin(); itr != tok.end(); itr++)
     {
         string temp = static_cast<string>(*itr);
+        testVec.push_back(temp);
         vec.push_back((char*)temp.c_str());
     }
     vec.push_back(NULL);
     
     char** commands = &vec[0];
-    //cout << "command: " << vec.at(0) << endl;
+    
+    if(testVec.at(0) == "test")    // checks for test commands
+    {
+        this->success = isTest(testVec);
+        return 0;
+    }
+    if(testVec.at(0) == "[" && testVec.at(testVec.size() - 1) == "]")
+    {                                   // checks for [] 
+        this->success = isTest(testVec);
+        return 0;
+    }
+    pid_t pid = -1;
+    int child_status;      
     this->success = true;
-    pid_t pid = fork();
-    int status;
+    pid = fork();       // run fork and execute the child and parent proccesses
+    
+    if(pid == 0)
+    {
 
-    if(pid < 0)
-    {
-        //cout << "error" << endl;
-        //cout << "EXITING" << endl;
-        exit(1);
-    }
-    else if (pid == 0)
-    {
-        int result = execvp(commands[0], commands);
-        if(result == -1)
+        int result = execvp(commands[0], commands); // call execvp on command
+
+        if( result == -1)
         {
-            //cout << "INPUTTED COMMAND IS FALSE " << endl;
             this->success = false;
-        //cout << "after " << endl;
-            
-        }
-        else
-            {
-                this->success = true;
-                //cout << "after << endl";
-            }
-        //cout << "after 1 " << endl;
-        
+            exit(1);
+        }    
+         return 0;
     }
+    else 
+    {    
+        pid_t newPid;
+        int exstat;
+        do
+        {
+            newPid = wait(&child_status);
+            exstat = WEXITSTATUS(child_status);
+            if(newPid != pid) kill(newPid, SIGTERM);
+        }while(newPid != pid);
+        if(exstat == 1)
+        {
+            this->success = false;
+        }
+        if(exstat == 2)
+        {
+            this->success = false;
+        }
+    }
+   
+    return 1;
+}
+
+
+int Command::connector(int &count)
+{
+    return 0;
+}
+
+bool Command::isTest(vector<string> &v) // executes text commands
+{
+
+    struct stat status;
+    int flag = 0; //sets -e initially incase no flag is found
+    string path = "";
+    
+    checkInput(flag, path, v); // checks vector for the flag and path name
+    char * cpath = (char*)path.c_str();
+    
+    
+    if(stat(cpath, &status) == 0)             // if it euals zero file/path exists 
+    {                                         
+        //file/directory exists                
+        if(flag == 0)                         // -e or no flag enter
+        {
+            cout << "(TRUE)" << endl;
+            return true;
+        }
+        if(flag == 1) // -d                   // check for -d
+        {
+            // cout << " Its -d" << endl;
+            if(S_ISDIR(status.st_mode))
+            {
+                cout << "(TRUE)" << endl;
+                return true;
+            }
+            else
+            {
+                cout << "(FALSE)" << endl;
+                return false;
+            }
+        }
+        else if(flag == 2) // -f              //check for -f
+        {
+            // cout << " Its -f" << endl;
+            if(S_ISREG(status.st_mode))
+            {
+                cout << "(TRUE)" << endl;
+                return true;
+            }
+            else
+            {
+                cout << "(FALSE)" << endl;
+                return false;
+            }
+        }
+    }    
     else
     {
-        //cout << "after 3" << endl;
-        while(waitpid(pid, &status, 0) != pid);
-        //cout << "after 4" << endl;
+        //file/directory doesn't exist
+        cout << "(FALSE)" << endl;
+        return false;
     }
-     //cout << "after 5" << endl;
-//    return;
-    //cout <<  "agfter6 " << this->success << endl;
+    return false;
 }
 
-
-void Command::connector()
+void Command::checkInput(int &flag, string &path, vector<string> &v)
 {
-    
+    flag = 0;
+    for(unsigned i = 1; i < v.size(); i++)
+    {
+        if(v.at(i) == "-e")
+        {
+            flag = 0;
+        }
+        else if(v.at(i) == "-d")
+        {
+            flag = 1;
+        }
+        else if(v.at(i) == "-f")
+        {
+            flag = 2;
+        }
+        else//set path if no argument found
+        {
+            path = v.at(i);
+            return;
+        }
+    }
 }
 
-// void Command::setString()
-// {
-//     this->commandString = "";
-// }
-
-// bool Command::isSuccess()
-// {
-//     if(this->pass)
-//     {
-//         return true;
-//     }
-//     return false;
-// }
-
-// void Command::setBool(bool b)
-// {
-//     this->pass = b;
-// }
+string TokenTest::PrecedenceParse(string c)
+{
+    // parses the string for parenthesis 
+    string command = c;
+    typedef tokenizer<char_separator<char> > tokenizer;
+    char_separator<char> sep("()",";||&&", drop_empty_tokens);
+    tokenizer tok(command, sep);
+    string newParse = "";
+    
+    for(tokenizer::iterator beg = tok.begin(); beg != tok.end(); beg++)
+    {
+        newParse += *beg;
+    }
+    return newParse;
+}

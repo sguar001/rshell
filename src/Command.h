@@ -5,11 +5,11 @@
 #include <vector>
 #include <iostream>
 #include "RShell.h"
-//#include "Token.h"
+#include "TokenTest.h"
 
-class Token;
-class TokenTest;
 using namespace std;
+
+class TokenTest;
 
 class Command : public RShell
 {
@@ -17,12 +17,12 @@ class Command : public RShell
         Command();
         Command(string c);
         void print();
-        void execute();
+        int execute();
         vector <Command*> commandVec;
         string getString();
-        //void setString();
-        // void connector(int count, RShell*);
-        void connector();
+        bool isTest(vector<string> &v);
+        void checkInput(int &flag, string &path, vector<string> &v);
+        int connector(int &count);
 
     private:
         string commandString;

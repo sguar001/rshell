@@ -10,7 +10,7 @@ using namespace std;
 
 TokenTest::TokenTest(string s)
 {
-    tk = s;
+    tk = s;                       
 }
 
 TokenTest::TokenTest(RShell* node)
@@ -18,86 +18,111 @@ TokenTest::TokenTest(RShell* node)
     this->tk = this->getString();
 }
 
-void TokenTest::Parse(string c)
-{
-    string command = c;
-    typedef tokenizer<char_separator<char> > tokenizer;
-    char_separator<char> sep("",";||&&", drop_empty_tokens);
-    tokenizer tok(command, sep);
-    vector<string> commands;
+bool TokenTest::Parse(string c) //here we are parsing the inputted string from 
+{                               //the user
+    string command = c;    
+    string newCommand = command; //set string equal to another to search for #
+    for(unsigned i = 0; i < command.size(); i++)
+    {
+        if(command[i] == '#') // check for # in string
+        {
+            newCommand = ""; // if found set string to empty
+            for(unsigned j = 0; j < i - 1; j++)
+            {
+                newCommand += command[j]; //append the string till the #
+            }
+            break;  // leave once fully appended
+        }
+    }
     
+    typedef tokenizer<char_separator<char> > tokenizer;
+    char_separator<char> sep("",";||&&#", drop_empty_tokens);
+    tokenizer tok(newCommand, sep);
+    vector<string> commands;
+    string newParse;
+    // tokenize the string based on || &&     
     for(tokenizer::iterator beg = tok.begin(); beg != tok.end(); beg++)
     {
-        commands.push_back(*beg);
+        if( (*beg)[0] == '(' || (*beg)[1] == '(') 
+        {
+            for(tokenizer::iterator ending = beg; ending != tok.end(); ending++)
+            {
+                int size = (*ending).size();
+                if( ((*ending)[size - 1] == ')') || ((*ending)[size - 2] == ')')
+                || ((*ending)[0] == ')' ))
+                {
+                    while(*beg != *ending)
+                    {
+                        newParse += *beg; //(if () append back together 
+                        beg++;            // to be entered as a single command
+                    }
+                    newParse += *ending;
+                    break;
+                }
+            }
+            commands.push_back(newParse); // push back the parse onto vector
+            newParse = "";
+        }
+        else
+        {
+            commands.push_back(*beg); // if no () then just push it back
+        }
+        
     }
-    // cout << "size: " << commands.size() << endl;
     int count = 0;
     
-    tokenSearch(commands, count);
-    tokenSort(commands);
-    return;
-    //Tree(commands, count);
+    tokenSearch(commands, count); // call search to look 
+
+    bool result = tokenSort(commands); //sets the return results to token sort
+    return result;
 }
 
-void TokenTest::Tree(vector<string> s, int totalToken)
+int TokenTest::Tree(vector<string> s, int totalToken) //set up the tree
 {
+    int value = 0;
     int count = totalToken;
     unsigned i = 0;
     TokenTest* T;
     for(i = 0; i < s.size(); i++)
     {
 
-        if((s.at(i) == "&&" || s.at(i) == "||") && count >= 0)
-        {
-            //cout << "Node_" << i << endl;
+        if((s.at(i) == "&&" || s.at(i) == "||") && count >= 0) // if token
+        { // sets up the bottom tree node
             T = new TokenTest(s.at(i));
             T->left = new Command(s.at(i - 1));
             T->right = new Command(s.at(i + 1));
             string test = T->getString();
-            //cout << "Node:" << test << endl;
-            //cout << "leftChild, rightChild" << endl;
-            //T->getChild();
-            //cout << endl;
             if(count == 1)
             {
-                // T->connector(count, T);
                 T->root = T;
-                T->connector();
+                value = T->connector(count);
+                return value;
             }
-            // count--;
             Tree_Builder(s, count, T, i);
-            return;
+            return 0;
         }
     }
+    return 0;
 }  
 
-void TokenTest::Tree_Builder(vector<string> s, int totalToken, TokenTest*& node, int j)
+void TokenTest::Tree_Builder(vector<string> s, int totalToken, TokenTest*& node,
+int j)
 {
-    // cout << "a" << endl;
-    int count = totalToken;
+    int count = totalToken;     
     int i = j + 1; // offset so it doesnt use same node
-    //cout << i;
     TokenTest* T;
     for(unsigned k = i; k < s.size(); k++)
     {
-        //cout << "k's value" << k <<  endl;
         if(s.at(k) == "&&" || s.at(k) == "||")
-        {
+        {                                      //sets up the rest of the tree
             T = new TokenTest(s.at(k));
-            T->left = node; // need to update node pointer somehow??
+            T->left = node; 
             
             T->right = new Command(s.at(k + 1));
-            
-            //string test = T->getString();
-            //cout << "Node: " << test << endl;
-            //cout << "leftChild, rightChild" << endl;
-            //T->getChild();
-            //cout << endl;
-            //count--;
-            Tree_Builder(s, count, T, k);
-            // T->connector(count, T);
+           
+            Tree_Builder(s, count, T, k);      // calls to keep building tree
             root = T;
-            T->connector();
+            T->connector(count);    // calls to recursively go through tree 
             return;
         }
     }  
@@ -105,131 +130,129 @@ void TokenTest::Tree_Builder(vector<string> s, int totalToken, TokenTest*& node,
 
 void TokenTest::tokenSearch(vector<string> &v, int &count)
 {
-   
    for(unsigned i = 0; i < v.size(); i++)
     {
         if(i + 1 != v.size())
         {
-            if((v.at(i) == "&") && (v.at(i + 1) == "&"))
-            {
+            if((v.at(i) == "&") && (v.at(i + 1) == "&")) // appends tokens 
+            {                                            // and counts them
                 v.at(i) = "&&";
                 v.erase(v.begin()+(i + 1));
                 count++;
             }
-            else if((v.at(i) == "|") && (v.at(i + 1) == "|"))
-            {
+            else if((v.at(i) == "|") && (v.at(i + 1) == "|")) // appends tokens
+            {                                                 // and counts them
                 v.at(i) = "||";
                  v.erase(v.begin()+(i + 1));
                  count++;
             }
-            else if (v.at(i) == "#")
-            {
-                vector<string>::iterator it;
-                int j = 0;
-                for( it = v.begin() + i;it < v.end(); it++, j++)
-                {
-                    v.erase(v.begin() + i);
-                    
-                }
-                return;
-            }
-            
             
         }
     }
 }
 
-void TokenTest::tokenSort(vector<string> &v)
+bool TokenTest::tokenSort(vector<string> &v)
 {
-    
-    
-    int count = 0;
+    unsigned temp = v.size() - 1;
+    unsigned count = 0;
     for(unsigned i = 0; i < v.size(); i++)
     {
-      //cout << "here" << endl;
-      if(v.at(i) == "exit")
-      {
-          //cout << "here1" << endl;
-          while(true)
-          {
-            exit(1);
-          }
-          
-      }
-      else if(v.at(i) == " exit")
-      {
-          //cout << "here2" << endl;
-          while(true)
-          {
-            exit(1);
-          }
-      }
-      else if(v.at(i) == "&&")
-      {
-          count ++;
-      }
-      else if(v.at(i) == " ")
-      {
-          return;
-      }
-      else if (v.at(i) == "||")
-      {
-          count++;
-      }
-      if(v.at(i) == ";" && i ==  1)
-      {
-          vector<string> comman;
-          vector<string>::iterator it1;
-          comman.push_back(v[0]);
-          //cout << "I will execute here for single command" << endl;
-          exec(comman);
-          //cout << "here" << endl;
-          //comman.erase(v.begin());
-          //cout << "I have executed a single command" << endl;
-          v.erase(v.begin());
-          v.erase(v.begin());
-          //cout << v.size() << endl;
-          tokenSort(v);
-          
+        if(v.at(i) == "&&") // counts the token
+        {
+            count++;
         }
-      else if(v.at(i) == ";" && count > 0)
-      {
+        else if (v.at(i) == "||") // counts the token
+        {
+            count++;
+        }
+        else if(v.at(i) == ";" && i ==  1) //if size is one and theres semicolom
+        {
+            vector<string> comman;         //execute a single command
+            vector<string>::iterator it1;
+            comman.push_back(v[0]);
+          
+            Command *C = new Command(v[0]);
+            C->execute();                 // call execute on the command
+            
+            v.erase(v.begin());           // erase it
+            v.erase(v.begin());           // erase it
+          
+            tokenSort(v);                 // call function again incase its
+                                          // linked commands
+        }
+        else if(v.at(i) == ";" && count > 0) // semi colon and connectors
+        {
           vector<string> command2;
           vector<string>::iterator it;
           int j = 0;
-          for( it = v.begin();it < v.end(); it++, j++)
+          for( it = v.begin();it < v.end(); it++, j++)  // make new vector
+          {                                             // for all up to ;
+                command2.push_back(*it);
+          }
+          vector<string>::iterator it1;
+    
+          Tree(command2, count);            // call the tree builder on command
+          for(unsigned j = 0; j< command2.size() ; j++) //delete that vector
+          {                                             
+              command2.erase(command2.begin());
+          }
+          for(unsigned k = 0; k < i+1 ; k++)
           {
-                //cout << "in vector building loop" << endl;
+              v.erase(v.begin());  // delete actual vector up to the semi colon
+          }
+          
+         count = 0;
+       
+        tokenSort(v);   // call token sort for the rest of the command
+      }                            
+      else if ( count > 0 && i == temp) //connectors and we are at size
+      {                                 //(so theres no semi colon)
+          vector<string> command2;
+          vector<string>::iterator it;
+          int j = 0;
+          for( it = v.begin();it < v.end(); it++, j++) // push back command on
+          {                                            // command 2
                 command2.push_back(*it);
           }
            vector<string>::iterator it1;
     
-          Tree(command2, count);
-           //cout << "after tree" << endl;
-         // cout <<"i's value" << i << endl;
-          for(int j = 0; i< command2.size() ; j++)
+          Tree(command2, count);                      // call to build tree
+          
+          for(unsigned j = 0; j< command2.size() ; j++)
           {
-              //cout << "in vector destruction loop" << endl;
-              command2.erase(command2.begin());
+              command2.erase(command2.begin());       //delete command2
           }
-          //cout <<"i's value2 " << i << endl;
           for(unsigned k = 0; k < i+1 ; k++)
           {
-              //cout << "in  actual vector destruct loop" << endl;
-              v.erase(v.begin());
+              v.erase(v.begin());    //delete v
           }
           
          count = 0;
-        //cout <<"size " << v.size() << endl;   
-        tokenSort(v);  
+         
+        return true; //return true so keep looping command line dont exit
+      }
+      else if (v.size() == 1 && count == 0)   //single command no semi colon
+      {
+            string currentString = v.at(0);
+            Command *C = new Command(currentString);
+            C->execute();              //execute this command
+            //exec(comman);
+          
+          vector<string> comman;
+          vector<string>::iterator it1;
+          comman.push_back(v[0]);
+ 
+          v.erase(v.begin());
       }
     }
-      if (v.size() == 0)
-       {
-           //cout << "exiting" << endl;
-           return;
-       }
+    
+    if (v.size() == 0 && count == 0)  
+    {
+         return true;
+    }
+      return false;
 }
+
 void TokenTest:: exec(vector<string> &v)
 {
     
@@ -248,7 +271,6 @@ void TokenTest:: exec(vector<string> &v)
     vec.push_back(NULL);
     
     char** commands = &vec[0];
-    //cout << "command: " << vec.at(0) << endl;
     this->success = true;
     pid_t pid = fork();
     int status;
@@ -279,219 +301,193 @@ void TokenTest::print()
 {
     if(this == 0)
     {
-        // cout << "zero" << endl;
         return;
     }   
-    // cout << "token: " << this->getString() << endl; 
-
-    //this->getChild();
 }
 
 string TokenTest::getString()
 {
-    //cout << "Node: " << tk << endl;
-    return tk;
+    return tk;  // returns string
 }
 void TokenTest::getChild()
 {
    this->left->print();
-   //cout << ", ";
    this->right->print();
    
 }
 
-void TokenTest::execute()
+int TokenTest::execute()   //conditions based on connector for executing
 {
-   
-    if(this->getString() == "||")
-    {
-        //cout << "A) " << endl;
-        if(this->left->getString() != "&&" && this->left->getString() != "||")
-        {
-            this->left->execute();
-             //cout <<" Status of: " << this->left->getString() << " " << this->left->success << endl;
-                //cout <<" Status of: " << this->right->getString() << " " << this->right->success << endl;
-            if(this->left->success == false)
+   if(this->getString() == "||")  // if ||
+   {
+        if(this->left->getString() == "||" || this->left->getString() == "&&" )
+        {                           // if the child is a token such as || or &&
+            if(this->left->success == false)                  // if child false
             {
-                //cout << "a)LEFT PIPE COMMAND FAILED" << endl;
-                
-                this->right->execute();
-                //cout <<" Status of: " << this->left->getString() << " " << this->left->success << endl;
-                //cout <<" Status of: " << this->right->getString() << " " << this->right->success << endl;
-                if(this->right->success == true)
+                this->right->execute();               // execute the right child
+                if(this->right->success == true)         // if right child true
                 {
-                    //cout << "a)RIGHT PIPE COMMAND SUCCEDED" << endl;
-                   
-                    this->success = true;
-    
+                    this->success = true;    // the token node is evaluated true
+                    return 1;    //return true
                 }
                 else
-                {   
-                    //cout << "b)RIGHT PIPE COMMAND FAILED" << endl;
-                    // cout << "+++++" << endl;
-                    // this->right->setString();
-                    this->success = false;
-                    // return;
+                {
+                    this->success = false;          //token is evaluated false
+                    return 0;                       // return false
                 }
             }
             else
             {
-                //cout << "b)LEFT PIPE COMMAND SUCCEDED" << endl; 
-                this->success = true;
-                // cout << "this: " << this->getString() << endl;
-                // cout << "this->success: " << this->success << endl;
-                //return;
-                // cout << "zzzzzzzz" << endl;
-                // this->left->setString();
-                // this->right->setString();
-                // return;
+                this->success = true;              // token evaluated true
+                return 1;                         // return true
             }
         }
         else
         {
-            if(this->left->success == false)
+            this->left->execute();             // if the child isnt a token
+            if(this->left->success == false) // go through same condition checks
             {
-                //cout << "$$$$$$$$$$$$$$$" << endl;
-                // this->left->setString();
                 this->right->execute();
-                 //cout <<" Status of: " << this->left->getString() << " " << this->left->success << endl;
-                //cout <<" Status of: " << this->right->getString() << " " << this->right->success << endl;
-                // cout << "VALUE: " << this->right->success << endl;
-                // cout << "--------------------------------" << endl;
                 if(this->right->success == true)
                 {
-                    // cout << "*************" << endl;
-                    // this->right->setString();
                     this->success = true;
-                    // return;
-                }
-                else
-                {
-                    // cout << "+++++" << endl;
-                    // this->right->setString();
-                    this->success = false;
-                    // return;
-                }
-            }
-            else
-            {
-                this->success = true;
-                //cout << "this: " << this->getString() << endl;
-                // //cout << "this->success: " << this->success << endl;
-                //return;
-                //cout << "zzzzzzzz" << endl;
-                // this->left->setString();
-                // this->right->setString();
-                // return;
-            }   
-        }
-    }
-    else if (this->getString() == "&&")
-    {
-        //cout << "b) Entered the && string" << endl;
-        if(this->left->getString() != "&&" && this->left->getString() != "||")
-        {
-            //cout << "b) enter the this->left->getString() != && && this->left->getString() != ||) string" << endl;
-            this->left->execute();
-             //cout <<" Status of: " << this->left->getString() << " " << this->left->success << endl;
-                //cout <<" Status of: " << this->right->getString() << " " << this->right->success << endl;
-            //cout << "b) this->left: " << this->left->getString() << endl;
-            //cout << this->left->success << endl;
-            if(this->left->success == true)
-            {
-                //this->left->setString();
-                this->right->execute();
-                 //cout <<" Status of: " << this->left->getString() << " " << this->left->success << endl;
-                //cout <<" Status of: " << this->right->getString() << " " << this->right->success << endl;
-                if(this->right->success == true)
-                {
-                    //this->right->setString();
-                    // cout << "b) it was true set parent to true" << endl;
-                    this->success = true;
-                    // return;
+                    return 1;
                     
                 }
                 else
                 {
-                    //this->right->setString();
-                    //cout << "b) it was false set parent to false" << endl;
                     this->success = false;
-                    // return;
+                    return 0;
+                }    
+            }
+            else
+            {
+                this->success = true;
+                return 1;
+            }
+        }    
+   }
+   else if(this->getString() == "&&" )  // if tokens &&
+   {
+       if(this->left->getString() == "||" || this->left->getString() == "&&" )
+        {             // if child is a node such as || or &&
+            if(this->left->success == true)
+            {
+                this->right->execute();
+                if(this->right->success == true)   // checks conditions
+                {
+                    this->success = true;
+                    return 1;
+                }
+                else
+                {
+                    this->success = false;
+                    return 0;
                 }
             }
             else
             {
-                //this->left->setString();
-                //this->right->setString();
-                //cout << "2b) it was false set parent to false" << endl;
                 this->success = false;
-                // return;
+                return 0;
             }
         }
-        else
-        {
-                // this->left->setString();
+       else                             // checks conditions if child isnt 
+       {                                // a token
+            this->left->execute();
+           if(this->left->success == false)
+            {
+                this->success = false;
+                return 0;
+                
+            }
+            else if (this->left->success == true)
+            {
                 this->right->execute();
-                if(this->right->success == true && this->left->success == true)
+                if(this->right->success == true)
                 {
-                    // this->right->setString();
-                   //  cout << "2b) it was true set parent to true" << endl;
-                     //cout << "its set to true" << endl;
-                    this->success = true;
-                    // return;
+                    this->success = true;  
+                    return 1;
                 }
                 else
                 {
-                    // this->right->setString();
                     this->success = false;
-                    // return;
-                    //cout << "3b) it was false set parent to false" << endl;
-                    //return;
+                    return 0;
                 }
-        
-           
-                // return; 
             }
-         //cout <<" Status of: " << this->left->getString() << " " << this->left->success << endl;
-         //cout <<" Status of: " << this->right->getString() << " " << this->right->success << endl;
-    }
+       }    
+       
+   }
+   
+    return 0;
 }
-
-
-void TokenTest::connector()
+int TokenTest::connector(int &count)  //recursively calls the tree
 {
-    // cout << "BEGINNING" << endl;
-    if(this->getString() == "&&" || this->getString() == "||")
+    int value = 0;
+    if(count > 0)
     {
-        // cout << "CCCCCCCCCCCCCCC" << endl;
-        this->left->connector();
-        // this->right->connector();
-        // this->execute();
+        count --;
+        this->left->connector(count); // call connector till count is zero
+    }                                 // means there are no more connectors left
+    if(count == 0)
+    {
+        value = this->execute();    // now call execute
     }
-    
-    this->execute();
-    
-    //cout << "RETURNING FROM EXECUTE CALL" << endl;
-    return;
+    return value;
 }
 
 
 
-// void TokenTest::setString()
-// {
-//     this->tk = "";
-// }
 
-// bool TokenTest::isSuccess()
-// {
-//     if(this->passed)
-//     {
-//         return true;
-//     }
-//     return false;    
-// }
 
-// void TokenTest::setBool(bool b)
-// {
-//     this->passed = b;
-// }
+
+
+
+bool TokenTest::ParseA(string c)  // same as parse but catches precedence 
+{                                 // when its already a command in the tree
+    string command = c;
+    typedef tokenizer<char_separator<char> > tokenizer;
+    char_separator<char> sep("",";||&&", drop_empty_tokens);
+    tokenizer tok(command, sep);
+    vector<string> commands;
+    string newParse;
+    
+    for(tokenizer::iterator beg = tok.begin(); beg != tok.end(); beg++)
+    {
+        if( (*beg)[0] == '(' )           // checks for open parenthesis
+        {
+            for(tokenizer::iterator ending = beg; ending != tok.end(); ending++)
+            {
+                int size = (*ending).size();
+                if( ((*ending)[size - 1] == ')') || ((*ending)[size - 2] == ')')
+                || ((*ending)[0] == ')' ))  // checks for closed parathesis
+                {
+                    while(*beg != *ending)
+                    {
+                        newParse += *beg; // parses together without parenthesis
+                        beg++;
+                    }
+                    newParse += *ending;
+                }
+            }
+            commands.push_back(newParse);
+        }
+        else
+        {
+            commands.push_back(*beg);
+        }
+    }
+    int count = 0;
+    
+    tokenSearch(commands, count); // calls search for connectors
+    int value = Tree(commands, count); // calls to assemble tree
+    bool result;
+    if(value == 1)
+    {
+        result = true;
+    }
+    else
+    {
+        result = false;
+    }
+    return result;
+}

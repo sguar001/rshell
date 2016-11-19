@@ -6,20 +6,16 @@
 
 using namespace std;
 
-class RShell
+class RShell // abstracts base class
 {
     public:
         RShell(){};
         
-        virtual void execute() = 0;
+        virtual int execute() = 0;
         virtual void print() = 0;
-        // virtual void connector(int count, RShell*) =0;
-        virtual void connector() = 0;
+        virtual int connector(int &count) = 0;
         virtual string getString() = 0;
-        //virtual void setString() = 0;
-        //virtual bool isSuccess() = 0;
-        //virtual void setBool(bool) = 0; 
-        
+
     public:
         RShell* left;
         RShell* right;

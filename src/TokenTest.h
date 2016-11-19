@@ -14,22 +14,22 @@ class TokenTest : public RShell
     public:
         TokenTest() {};
         TokenTest(string s);
-        //TokenTest(bool passed);
         TokenTest(RShell* node);
         string getString();
         void getChild();
-        void Parse(string c);
-        void execute();
-        void Tree(vector<string> s, int count);
+        bool Parse(string c);
+        int execute();
+        int Tree(vector<string> s, int count);
         void Tree_Builder(vector<string> s, int count, TokenTest* &node, int i);
         void tokenSearch(vector<string> &v, int &count);
-        void tokenSort(vector<string> &v);
+        bool tokenSort(vector<string> &v);
         void print();
         void exec(vector<string>& v);
-        void connector();
-        //void setString();
-        //void setBool();
-        //bool isSuccess();
+        int connector(int &count);
+        string PrecedenceParse(string c);
+        bool ParseA(string c);
+        bool isTest(vector<string> &v);
+        void checkInput(int &flag, string &path, vector<string> &v);
         
     private:
         string tk;
