@@ -241,17 +241,11 @@ bool Command::isCd(vector<string> &v)
     
     if(v.size() > 1 && v.at(1) == "-") //handle cd - command
     {
-        // cout << "found -" << endl;''
-        // cout << "current cd - beginning PWD: " << getenv("PWD") << endl;
-        
-        // char* tempPath = getenv("HOME");    
         char* oldPath = getenv("PWD");
         char* oldEnv = (char*)"OLDPWD";
-        // setenv(oldEnv, tempPath, -1);// change OLDPWD environment variable to value in HOME, overwrite if already exists
-        //avoid crashing ig OLDPWD is not previously set
         
         char* currPath = getenv("OLDPWD");
-        if(currPath == NULL || currPath == "")
+        if(currPath == NULL)
         {
             // cout << "IT'S NULL" << endl; 
             return false;
