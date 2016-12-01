@@ -1,0 +1,12 @@
+cd
+cd workspace/cs100/assign3/src
+cd -
+cd && ls -a
+(ls -l && cd workspace/cs100/assign3/src) 
+(cd || blah && ls -a) 
+cd - && echo "Return"
+(cd && ls -al) || exit
+cd - 
+(cd || ls -a) && exit
+(cd asdf || ls -a ) && (echo ABC && exit)
+exit
