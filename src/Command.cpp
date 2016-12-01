@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <string>
+#include <stdlib.h>
 
 using namespace std;
 using namespace boost;
@@ -89,6 +90,12 @@ int Command::execute()
     if(testVec.at(0) == "[" && testVec.at(testVec.size() - 1) == "]")
     {                                   // checks for [] 
         this->success = isTest(testVec);
+        return 0;
+    }
+    if(testVec.at(0) == "cd")    // checks for test commands
+    {
+        // cout << "this is a cd command" << endl;
+        this->success = isCd(testVec);
         return 0;
     }
     pid_t pid = -1;
@@ -217,6 +224,115 @@ void Command::checkInput(int &flag, string &path, vector<string> &v)
             return;
         }
     }
+}
+
+bool Command::isCd(vector<string> &v)
+{
+    // cout << "I am now in cd" << endl;
+    // cout << "current vector size: " << v.size() << endl;
+    
+    char* thePath;
+    thePath = getenv("PWD");
+    
+    if(thePath == NULL)
+    {
+        return false; //path doesn't exist
+    }
+    
+    if(v.size() > 1 && v.at(1) == "-") //handle cd - command
+    {
+        // cout << "found -" << endl;''
+        // cout << "current cd - beginning PWD: " << getenv("PWD") << endl;
+        
+        // char* tempPath = getenv("HOME");    
+        char* oldPath = getenv("PWD");
+        char* oldEnv = (char*)"OLDPWD";
+        // setenv(oldEnv, tempPath, -1);// change OLDPWD environment variable to value in HOME, overwrite if already exists
+        //avoid crashing ig OLDPWD is not previously set
+        
+        char* currPath = getenv("OLDPWD");
+        if(currPath == NULL || currPath == "")
+        {
+            // cout << "IT'S NULL" << endl; 
+            return false;
+        }
+        char* envName = (char*)"PWD";
+        setenv(envName, currPath, -1); //change PWD environemnt variable to value in OLDPWD, overwrite if already exists
+        // cout << "current PWD: " << getenv("PWD") << endl;
+
+        setenv(oldEnv, oldPath, -1);// change OLDPWD environment variable to value in PWD, overwrite if already exists
+        // cout << "after setenv OLDPWD: " << getenv("OLDPWD") << endl;
+
+        
+        int cdResult = chdir(currPath); //change directory
+        if(cdResult == -1)
+        {
+            return false;
+        }
+        return true;
+    }
+    if(v.size() == 1) // handle cd command
+    {
+        // cout << "current OLDPWD: " << getenv("OLDPWD") << endl;
+        // cout << "current PWD: " << getenv("PWD") << endl;
+        
+        char* homePath;
+        
+        char* oldPath = getenv("PWD");
+        char* oldEnv = (char*)"OLDPWD";
+        setenv(oldEnv, oldPath, -1); //change OLDPWD enviroment variable to value in PWD, overwrite if already exists
+        // cout << "current OLDPWD: " << getenv("OLDPWD") << endl;
+        
+        homePath = getenv("HOME");
+        // cout << "home env: " << homePath << endl;
+        char* envName = (char*)"PWD";
+        setenv(envName, homePath, -1); //change PWD enviroment variable to homePath, overwrite if already exists
+        // cout << "after setenv PWD: " << getenv("PWD") << endl;
+        // cout << "after setenv OLDPWD: " << getenv("OLDPWD") << endl;
+
+
+        int cdResult = chdir(homePath); //change directory 
+        
+        // char* arr2 = get_current_dir_name(); //allocates memory, must delete afterwards - for testing 
+        
+        // cout << "prev path: " << getenv("OLDPWD") << endl;
+        // cout << "new path: " << arr2 << endl;
+        if(cdResult == -1)
+        {
+            return false;
+        }
+        return true;
+    }
+    if(v.size() > 1 && v.at(1) != "-") // handle cd <PATH> command 
+    {
+        string tempPath = v.at(1);
+        char* newPath = (char*)tempPath.c_str(); //variable for <PATH> passed in 
+        
+        int cdResult = chdir(newPath); //change directory 
+        // cout << "cdResult: " << cdResult << endl;
+        if(cdResult == -1)
+        {
+            return false;
+        }
+        
+        char* oldPath = getenv("PWD");
+        char* oldEnv = (char*)"OLDPWD";
+        setenv(oldEnv, oldPath, -1); //change OLDPWD enviroment variable to value in PWD, overwrite if already exists
+        // cout << "result1: " << result1 << endl;
+        
+        char* envName = (char*)"PWD";
+        setenv(envName, newPath, -1); //change PWD enviroment variable to newPath, overwrite if already exists
+        // int cdResult2 = chdir(newcwd);
+        // cout << "cdResult2: " << cdResult2 << endl;
+        
+        // char* arrl = get_current_dir_name(); //allocates memory, must delete afterwards - for testing 
+        
+        // cout << "prev path: " << getenv("OLDPWD") << endl;
+        // cout << "new path: " << newcwd << endl;
+        
+        return true;
+    }
+    return true;
 }
 
 string TokenTest::PrecedenceParse(string c)

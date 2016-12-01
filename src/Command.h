@@ -23,6 +23,7 @@ class Command : public RShell
         bool isTest(vector<string> &v);
         void checkInput(int &flag, string &path, vector<string> &v);
         int connector(int &count);
+        bool isCd(vector <string> &v);
 
     private:
         string commandString;
