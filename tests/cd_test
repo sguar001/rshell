@@ -7,6 +7,6 @@ cd && ls -a
 cd - && echo "Return"
 (cd && ls -al) || exit
 cd - 
+(cd asdf || ls -a ) && (echo ABC || exit)
 (cd || ls -a) && exit
-(cd asdf || ls -a ) && (echo ABC && exit)
 exit
