@@ -241,7 +241,8 @@ bool Command::isCd(vector<string> &v)
     
     if(v.size() > 1 && v.at(1) == "-") //handle cd - command
     {
-        char* oldPath = getenv("PWD");
+        // char* oldPath = getenv("PWD");
+        char* oldPath = get_current_dir_name();
         char* oldEnv = (char*)"OLDPWD";
         
         char* currPath = getenv("OLDPWD");
@@ -250,12 +251,11 @@ bool Command::isCd(vector<string> &v)
             // cout << "IT'S NULL" << endl; 
             return false;
         }
+        
         char* envName = (char*)"PWD";
         setenv(envName, currPath, -1); //change PWD environemnt variable to value in OLDPWD, overwrite if already exists
-        // cout << "current PWD: " << getenv("PWD") << endl;
 
         setenv(oldEnv, oldPath, -1);// change OLDPWD environment variable to value in PWD, overwrite if already exists
-        // cout << "after setenv OLDPWD: " << getenv("OLDPWD") << endl;
 
         
         int cdResult = chdir(currPath); //change directory
@@ -263,13 +263,12 @@ bool Command::isCd(vector<string> &v)
         {
             return false;
         }
+        
+        delete oldPath;
         return true;
     }
     if(v.size() == 1) // handle cd command
     {
-        // cout << "current OLDPWD: " << getenv("OLDPWD") << endl;
-        // cout << "current PWD: " << getenv("PWD") << endl;
-        
         char* homePath;
         
         char* oldPath = getenv("PWD");
@@ -295,6 +294,7 @@ bool Command::isCd(vector<string> &v)
         {
             return false;
         }
+        
         return true;
     }
     if(v.size() > 1 && v.at(1) != "-") // handle cd <PATH> command 
@@ -315,15 +315,12 @@ bool Command::isCd(vector<string> &v)
         // cout << "result1: " << result1 << endl;
         
         char* envName = (char*)"PWD";
-        setenv(envName, newPath, -1); //change PWD enviroment variable to newPath, overwrite if already exists
+        char* newPath2 = get_current_dir_name();
+        setenv(envName, newPath2, -1); //change PWD enviroment variable to newPath, overwrite if already exists
         // int cdResult2 = chdir(newcwd);
         // cout << "cdResult2: " << cdResult2 << endl;
         
-        // char* arrl = get_current_dir_name(); //allocates memory, must delete afterwards - for testing 
-        
-        // cout << "prev path: " << getenv("OLDPWD") << endl;
-        // cout << "new path: " << newcwd << endl;
-        
+        delete newPath2;
         return true;
     }
     return true;
